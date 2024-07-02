@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="qa">
+
+	<select id="selectQalist" resultType="QaDto">
+		SELECT QU_SEQ , QU_TITLE , QU_CONTENT , AUTHOR ,REGDATE, REPLYED , CATEGORY , ORIGIN 
+	FROM QUESTION q
+	</select>
+	
+	<insert id="insertQa" parameterType="QaDto">
+		INSERT INTO QUESTION
+(QU_SEQ, QU_TITLE, QU_CONTENT, AUTHOR, REGDATE, REPLYED, CATEGORY, ORIGIN)
+VALUES((SELECT NVL(MAX(QU_SEQ),0)+1 FROM QUESTION), '#{qu_title}', '#{qu_content}', '#{id}', SYSDATE, 'N', '없음', 0)
+	</insert>
+	
+	
+
+</mapper>

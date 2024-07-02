@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="class">
+
+<resultMap type="java.util.HashMap" id="HashMap">
+	<result property="hash_seq" column="HASH_SEQ"></result>
+	<result property="value" column="VALUE"></result>
+</resultMap>
+
+<resultMap type="ClassDto" id="ClassDto">
+	<result property="cl_seq" column="CL_SEQ"/>
+	<result property="cl_title" column="CL_TITLE"/>
+	<result property="cl_content" column="CL_CONTENT"/>
+	<result property="teacher" column="TEACHER"/>
+	<result property="price" column="PRICE"/>
+	<result property="startday" column="STARTDAY"/>
+	<result property="endday" column="ENDDAY"/>
+	<result property="term" column="TERM"/>
+	<result property="address" column="ADDRESS"/>
+	<result property="maxmember" column="MAXMEMBER"/>
+	<collection property="hashList" resultMap="HashMap"/>
+</resultMap>
+
+
+<!-- 강의 개설 -->
+<insert id="insertClass" parameterType="ClassDto">
+	<selectKey keyProperty="cl_seq" resultType="java.lang.Integer" order="BEFORE">
+		SELECT NVL(MAX(CL_SEQ),0)+1 FROM CLASS
+	</selectKey>
+INSERT INTO CLASS
+	(CL_SEQ, CL_TITLE, CL_CONTENT, TEACHER, PRICE, STARTDAY, ENDDAY, TERM, ADDRESS, MAXMEMBER)
+	VALUES(#{cl_seq}, #{cl_title}, #{cl_content},
+	#{teacher}, #{price}, #{startday}, #{endday}, #{term}, #{address}, #{maxmember})
+	
+</insert>
+
+<!-- 신규 해시 등록 -->
+<insert id="insertHash" parameterType="java.lang.String">
+INSERT INTO HASH (HASH_SEQ, VALUE)
+	VALUES((SELECT NVL(MAX(HASH_SEQ), 0)+1 FROM HASH), #{value})
+</insert>
+
+<!-- 해시태그 존재여부 검색 -->
+<select id="checkHash" parameterType="java.lang.String" resultMap="HashMap">
+SELECT HASH_SEQ, VALUE
+	FROM HASH
+	<where>
+		<choose>
+			<when test ="value != null">
+				VALUE = #{value}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</where>
+</select>
+
+<!-- 해시태그별 강의 조회 -->
+<select id="hashedClassList" parameterType="java.lang.String" resultMap="ClassDto">
+SELECT CL_SEQ, CL_CONTENT, CL_TITLE, TEACHER, PRICE, STARTDAY, ENDDAY, ADDRESS
+	FROM HASH JOIN LINKHASH USING(HASH_SEQ) JOIN CLASS c USING(CL_SEQ)
+	WHERE VALUE = #{value}
+	ORDER BY CL_SEQ DESC
+</select>
+
+<!-- 강의 해시 조회 -->
+<select id="linkHashList" parameterType="java.lang.Integer" resultType="java.lang.String">
+SELECT VALUE
+	FROM LINKHASH JOIN HASH USING(HASH_SEQ)
+	WHERE CL_SEQ = #{cl_seq}
+</select>
+
+<!-- 강의 해시 등록 -->
+<insert id="updateLinkHash" parameterType="java.util.Map">
+INSERT INTO LINKHASH (CL_SEQ, HASH_SEQ)
+	VALUES(#{cl_seq},#{hash_seq})
+</insert>
+
+<!-- 강의 전체 조회 -->
+<select id="classList" resultMap="ClassDto">
+SELECT CL_SEQ, CL_TITLE, CL_CONTENT, r.NAME AS TEACHER, PRICE, STARTDAY, ENDDAY, c.ADDRESS, VALUE  
+	FROM CLASS c LEFT OUTER JOIN LINKHASH USING(CL_SEQ) LEFT OUTER JOIN HASH USING(HASH_SEQ)
+		JOIN REGISTER r ON c.TEACHER = r.ID 
+	ORDER BY CL_SEQ DESC
+</select>
+
+<!-- 강의 상세 조회 -->
+<select id="classDetail" parameterType="java.lang.Integer" resultMap="ClassDto">
+SELECT CL_SEQ, CL_TITLE, CL_CONTENT, r.NAME AS TEACHER, PRICE, STARTDAY, ENDDAY, TERM, c.ADDRESS, MAXMEMBER, VALUE  
+	FROM CLASS c LEFT OUTER JOIN LINKHASH USING(CL_SEQ) LEFT OUTER JOIN HASH USING(HASH_SEQ)
+		JOIN REGISTER r ON c.TEACHER = r.ID 
+	WHERE CL_SEQ=#{cl_seq}
+</select>
+
+<!-- 알림 서비스 대상 조회 -->
+<select id="emailList" resultType="RegisterDto">
+SELECT ID, EMAIL
+        FROM REGISTER
+        WHERE ADRECIEVE = 'Y'
+</select>
+
+<!-- 유사 과목 가격 비교 -->
+<!-- 넣을 때, "hashList":List<String> 형식으로 넣는다 - List에는 hash의 value가 들어가야 함 -->
+<select id="cheapestClass" parameterType="java.util.Map" resultType="ClassDto">
+SELECT CL_SEQ, CL_TITLE, PRICE
+FROM (SELECT CL_SEQ, CL_TITLE, PRICE, ROW_NUMBER() OVER(ORDER BY PRICE) AS RN
+		FROM CLASS c 
+		WHERE EXISTS (SELECT 1
+						FROM CLASS JOIN LINKHASH l USING(CL_SEQ) JOIN HASH USING(HASH_SEQ)
+						WHERE VALUE IN
+						 <foreach item="hash" index="index" collection="hashList" open="(" close=")" separator=",">
+					            #{hash}
+					    </foreach>
+						)
+		ORDER BY RN)
+<![CDATA[WHERE RN < 5]]>
+</select>
+
+<!-- 최근 강의 검색 -->
+<select id="newestClass" resultType="ClassDto">
+SELECT CL_SEQ, CL_TITLE, TEACHER, PRICE
+FROM (
+	SELECT CL_SEQ, CL_TITLE, TEACHER, PRICE, ROWNUM
+	FROM CLASS
+	<![CDATA[WHERE STARTDAY > SYSDATE]]>
+	ORDER BY CL_SEQ DESC)
+<![CDATA[WHERE ROWNUM <= 5]]>
+</select>
+
+<!-- 개강 임박 강의 검색 -->
+<select id="deadlineClass" resultType="ClassDto">
+SELECT CL_SEQ, CL_TITLE, TEACHER, STARTDAY, PRICE
+FROM (
+	SELECT CL_SEQ, CL_TITLE, TEACHER, PRICE, STARTDAY, ROWNUM
+	FROM CLASS
+	<![CDATA[WHERE STARTDAY > SYSDATE AND STARTDAY < SYSDATE + 7]]>
+	ORDER BY STARTDAY DESC)
+<![CDATA[WHERE ROWNUM <= 5]]>
+</select>
+
+<!-- 강사 본인 확인 -->
+<select id="checkTeacher" parameterType="java.util.Map" resultType="ClassDto">
+SELECT CL_SEQ
+	FROM CLASS
+	WHERE CL_SEQ = #{cl_seq} AND TEACHER = #{id}
+</select>
+
+<!-- 수강 중인 강의 조회 -->
+<select id="regClassList" parameterType="java.lang.String" resultType="ClassDto">
+SELECT CL_SEQ, CL_TITLE, CL_CONTENT, TEACHER, PRICE, STARTDAY, ENDDAY, c.ADDRESS
+	FROM CLASS c JOIN STUDENT s USING(CL_SEQ) 
+	WHERE STUDENT = #{id} AND STATUS='수강중'
+</select>
+
+<!-- 나의 개설 강의 조회 -->
+<select id="teachClassList" parameterType="java.lang.String" resultType="ClassDto">
+SELECT CL_SEQ, CL_TITLE, CL_CONTENT, TEACHER, PRICE, STARTDAY, ENDDAY, c.ADDRESS
+	FROM CLASS c 
+	WHERE TEACHER=#{id}
+</select>
+
+</mapper>

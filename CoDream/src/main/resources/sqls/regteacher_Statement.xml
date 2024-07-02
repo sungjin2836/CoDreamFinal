@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="regteacher">
+	
+	<select id="regteacherCount" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM REGTEACHER
+	</select>
+
+	<insert id="insertRegteacher" parameterType="RegteacherDto">
+		<selectKey keyProperty="te_seq" order="BEFORE" resultType="java.lang.Integer">
+			SELECT NVL(MAX(TE_SEQ),0) + 1 FROM REGTEACHER
+		</selectKey>
+		INSERT INTO REGTEACHER
+			(TE_SEQ, TE_TITLE, USERID, TE_CONTENT, FILE_GID, TE_ADMIT)
+			VALUES(#{te_seq}, #{te_title}, #{userid}, #{te_content}, #{file_gid}, '대기')
+	</insert>
+	
+	<select id="selectRegteacher" resultType="RegteacherDto">
+		<![CDATA[
+		SELECT TE_SEQ, TE_TITLE, USERID, TE_ADMIT FROM(SELECT ROW_NUMBER() OVER(ORDER BY TE_SEQ DESC) AS RNUM, TE_SEQ, TE_TITLE, USERID, TE_ADMIT
+			FROM REGTEACHER) WHERE RNUM >= #{start} AND RNUM <= #{step}
+			]]>
+	</select>
+
+	<select id="detailRegteacher" parameterType="java.lang.String" resultType="RegteacherDto">
+		SELECT TE_SEQ, TE_TITLE, USERID, TE_CONTENT, FILE_GID, TE_ADMIT
+			FROM REGTEACHER WHERE TE_SEQ = #{te_seq}
+	</select>
+
+	<!-- 강사 신청 여부 확인을 위해 사용함 -->
+	<select id="countRegteacher" parameterType="java.lang.String" resultType="RegteacherDto">
+		SELECT TE_SEQ, TE_TITLE, USERID, TE_CONTENT, FILE_GID, TE_ADMIT
+			FROM REGTEACHER WHERE USERID = #{userid}
+	</select>
+	
+	<update id="modifyRegteacher" parameterType="java.util.Map">
+		UPDATE REGTEACHER
+			SET TE_ADMIT=#{te_admit}
+			WHERE TE_SEQ=#{te_seq}
+	</update>
+</mapper>

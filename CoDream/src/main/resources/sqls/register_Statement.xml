@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="register">
+
+	<resultMap type="com.code.dream.security.UserSecurityDto" id="UserDto">
+		<result property="username" column="ID"/>
+		<collection property="dto" resultMap="RegDto"/>
+		<collection property="authorities" ofType="java.lang.String" javaType="java.util.List">
+			<result property="role" column="ROLE"/>
+		</collection>
+	</resultMap>
+	<resultMap type="RegisterDto" id="RegDto">
+		<result property="id" column="ID"/>
+		<result property="name" column="NAME"/>
+		<result property="phone" column="PHONE"/>
+		<result property="email" column="EMAIL"/>
+		<result property="address" column="ADDRESS"/>
+		<result property="delflag" column="DELFLAG"/>
+		<result property="regdate" column="REGDATE"/>
+		<result property="adrecieve" column="ADRECIEVE"/>
+	</resultMap>
+	
+	<select id="userCount" resultType="java.lang.Integer">
+		SELECT COUNT(ID) FROM REGISTER
+	</select>
+	
+	<select id="selectUserList" parameterType="PageDto" resultMap="UserDto">
+		<![CDATA[
+			SELECT ID, NAME, PHONE, EMAIL, ADDRESS, DELFLAG, REGDATE, ADRECIEVE, "ROLE" FROM 
+				(SELECT RNUM, re.ID, NAME, PHONE, EMAIL, ADDRESS, DELFLAG, re.REGDATE, ADRECIEVE, ro."ROLE"
+				FROM (SELECT ROW_NUMBER() OVER(ORDER BY ID DESC) AS RNUM, ID, NAME, PHONE, EMAIL, ADDRESS, DELFLAG, REGDATE, ADRECIEVE FROM REGISTER) re JOIN "ROLE" ro ON re.ID = ro.ID)
+				WHERE RNUM >= #{start} AND RNUM <= #{step}
+			]]>
+	</select>
+	
+	<select id="selectUser" resultType="RegisterDto">
+		SELECT ID, NAME, PHONE, EMAIL, ADDRESS, DELFLAG, REGDATE, ADRECIEVE
+			FROM REGISTER
+	</select>
+	
+	<insert id="registUser" parameterType="RegisterDto">
+		INSERT INTO REGISTER
+			(ID, NAME, PASSWORD, PHONE,
+			 EMAIL, ADDRESS, DELFLAG, RESUME, REGDATE, ADRECIEVE)
+			VALUES(#{id}, #{name}, #{password}, #{phone}, 
+					#{email}, #{address}, 'N', '안녕하세요! 반갑습니다.', SYSDATE, #{adrecieve})
+	</insert>
+	
+	<select id="login" parameterType="java.util.Map" resultType="RegisterDto">
+		SELECT ID, NAME, PASSWORD, PHONE, EMAIL, ADDRESS, RESUME, REGDATE, DELFLAG
+			FROM REGISTER WHERE ID = #{id}
+	</select>
+	
+	<select id="idDuplicateCheck" parameterType="java.lang.String" resultType="java.lang.Integer">
+		SELECT COUNT(ID) ID
+			FROM REGISTER
+				WHERE ID = #{id}
+	</select>
+	
+	<insert id="deleteUser" parameterType="java.util.Map">
+		<selectKey keyProperty="flag" order="BEFORE" resultType="java.lang.String">
+			SELECT CASE WHEN DELFLAG = 'N' THEN 'Y'
+				WHEN DELFLAG = 'Y' THEN 'N' END DELFLAG FROM REGISTER WHERE ID = #{id}
+		</selectKey>
+		UPDATE REGISTER
+			SET DELFLAG=#{flag}
+			WHERE ID=#{id}
+	</insert>
+	
+	<update id="modifyUser" parameterType="java.lang.String">
+		UPDATE REGISTER
+				SET PASSWORD=#{password}, PHONE=#{phone}, EMAIL=#{email}, 
+				ADDRESS=#{address}, RESUME=#{resume}, ADRECIEVE=#{adrecieve}
+				WHERE ID=#{id}
+	</update>
+	
+	<select id="selectRole" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT "ROLE" FROM "ROLE" WHERE ID = #{id}
+	</select>
+	
+	<insert id="addRole" parameterType="java.util.Map">
+		INSERT INTO "ROLE"
+			(ID, "ROLE", REGDATE)
+			VALUES(#{id}, #{role}, SYSDATE)
+	</insert>
+	
+	<delete id="deleteRole" parameterType="java.util.Map">
+		DELETE FROM "ROLE"
+			WHERE ID=#{id} AND "ROLE"=#{role}
+	</delete>
+</mapper>

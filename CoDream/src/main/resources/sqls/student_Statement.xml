@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="student">
+
+
+<!-- 수강 신청 -->
+<insert id="insertStudent" parameterType="StudentDto">
+INSERT INTO STUDENT (STUDENT, CL_SEQ, REGDATE, VISIT, STATUS)
+	VALUES(#{student}, #{cl_seq}, SYSDATE, #{visit}, #{status})
+</insert>
+
+<!-- 수강신청한 강의인지 확인한다 -->
+<!-- 들어오는 타입 : Map<String, String> cl_seq, student(id) -->
+<select id="checkStudent" parameterType="java.util.Map" resultType="StudentDto">
+	SELECT STUDENT
+		FROM STUDENT
+		WHERE CL_SEQ = #{cl_seq} AND STUDENT = #{id} AND STATUS='수강중'
+</select>
+
+<!-- 출결 입력 -->
+<insert id="insertVisit" parameterType="StudentDto">
+UPDATE STUDENT SET VISIT = #{visit}
+        WHERE STUDENT = #{student}
+</insert>
+
+<!-- 출결 조회 : 학생의 이름과 강의번호를 가지고 조회함 -->
+<select id="visitList" parameterType="StudentDto" resultType="StudentDto">
+SELECT STUDENT, CL_SEQ, VISIT
+        FROM STUDENT s
+        WHERE STUDENT = #{student} AND CL_SEQ=#{cl_seq}
+</select>
+
+<!-- 필기 전체 조회 -->
+<select id="memoList" parameterType="java.lang.Integer" resultType="MemoDto">
+SELECT ME_SEQ, ME_TITLE, AUTHOR, REGDATE
+	FROM MEMO
+	WHERE CL_SEQ = #{cl_seq}
+	ORDER BY ME_SEQ DESC
+</select>
+
+<!-- 필기 자료 최근 5개까지만 조회 -->
+<select id="recentMemoList" parameterType="java.lang.Integer" resultType="MemoDto">
+SELECT ME_SEQ, ME_TITLE, AUTHOR, REGDATE, ROWNUM
+FROM  (SELECT ME_SEQ, ME_TITLE, AUTHOR, REGDATE
+		FROM MEMO
+		WHERE CL_SEQ = #{cl_seq}
+		ORDER BY ME_SEQ DESC)
+	<![CDATA[WHERE ROWNUM <= 5]]>
+</select>
+
+<!-- 필기 상세 조회 -->
+<select id="memoDetail" parameterType="java.lang.Integer" resultType="MemoDto">
+SELECT ME_SEQ, ME_TITLE, ME_CONTENT, AUTHOR, REGDATE, FILE_GID
+        FROM MEMO WHERE ME_SEQ = #{me_seq}
+</select>
+
+<!-- 필기 자료 등록 -->
+<insert id="insertMemo" parameterType="MemoDto">
+INSERT INTO MEMO (ME_SEQ, ME_TITLE, ME_CONTENT, author, REGDATE, FILE_GID, CL_SEQ)
+	VALUES((SELECT NVL(MAX(ME_SEQ),0) FROM MEMO)+1, #{me_title}, #{me_content}, #{author}, SYSDATE, #{file_gid}, #{cl_seq})
+</insert>
+
+<!-- 강의 자료 등록 -->
+<insert id="insertDoc" parameterType="DocumentDto">
+INSERT INTO DOCUMENT (DOC_SEQ, CL_SEQ, DOC_TITLE, DOC_CONTENT, AUTHOR, FILE_GID, REGDATE)
+	VALUES((SELECT NVL(MAX(DOC_SEQ),0) FROM DOCUMENT)+1, #{cl_seq},#{doc_title}, #{doc_content} , #{author}, #{file_gid}, SYSDATE)
+</insert>
+
+<!-- 강의 자료 전체 조회 -->
+<select id="docList" parameterType="java.lang.Integer" resultType="DocumentDto">
+SELECT DOC_SEQ, CL_SEQ, DOC_TITLE, AUTHOR, REGDATE
+	FROM DOCUMENT WHERE CL_SEQ = #{cl_seq}
+	ORDER BY DOC_SEQ DESC
+</select>
+
+<!-- 강의 자료 최근 5개까지만 조회 -->
+<select id="recentDocList" parameterType="java.lang.Integer" resultType="DocumentDto">
+SELECT DOC_SEQ, CL_SEQ, DOC_TITLE, AUTHOR, REGDATE, ROWNUM
+	FROM  (SELECT DOC_SEQ, CL_SEQ, DOC_TITLE, AUTHOR, REGDATE, ROWNUM
+			FROM DOCUMENT WHERE CL_SEQ = #{cl_seq}
+			ORDER BY DOC_SEQ DESC)
+	<![CDATA[WHERE ROWNUM <= 5]]>
+</select>
+
+<!-- 강의 자료 상세 조회 -->
+<select id="docDetail" parameterType="java.lang.Integer" resultType="DocumentDto">
+SELECT DOC_SEQ, CL_SEQ, DOC_TITLE, DOC_CONTENT, AUTHOR, FILE_GID, REGDATE
+	FROM DOCUMENT WHERE DOC_SEQ = #{doc_seq}
+</select>
+
+<!-- 수강생 조회 -->
+<select id="studentList" parameterType="java.lang.Integer" resultType="StudentDto">
+SELECT STUDENT, CL_SEQ, REGDATE, VISIT, STATUS
+        FROM STUDENT
+        WHERE CL_SEQ = #{cl_seq}
+</select>
+
+<!-- 수강 취소 -->
+<delete id="dropStudent" parameterType="java.util.Map">
+	DELETE STUDENT WHERE STUDENT=#{student} AND CL_SEQ=#{cl_seq}
+</delete>
+
+</mapper>

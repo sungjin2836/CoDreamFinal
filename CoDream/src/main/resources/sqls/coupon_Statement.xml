@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="coupon">
+
+	<select id="selectCoupon" resultType="CouponDto">
+		SELECT COUPON_SEQ , COUPONNAME , DISCOUNT , MAXPRICE , STATUS 
+			FROM COUPON
+	</select>
+	
+	<insert id="insertCoupon" parameterType="CouponDto">
+		INSERT INTO COUPON
+ (COUPON_SEQ, COUPONNAME, DISCOUNT, MAXPRICE, STATUS)
+ VALUES((SELECT NVL(MAX(COUPON_SEQ),0)+1 FROM COUPON), #{couponname}, #{discount}, #{maxprice}, #{status})
+	</insert>
+	
+	<select id="selectMemCoupon" resultType="CouponDto">
+		SELECT id, c.COUPONNAME ,c.DISCOUNT,c.MAXPRICE , c.STATUS
+			FROM COUPON_LIST cl JOIN COUPON c USING(COUPON_SEQ)
+			WHERE ID = #{id}
+	</select>
+	
+	<insert id="insertMemCoupon" parameterType="CouponDto">
+		INSERT INTO COUPON_LIST
+			(CLIST_SEQ, ID, COUPON_SEQ, EXPIRE, DEFLAG)
+			VALUES((SELECT NVL(MAX(CLIST_SEQ),0)+1 FROM COUPON_LIST), #{id}, #{coupon_seq}, SYSDATE+7, 'N')
+	</insert>
+	
+	<delete id="deleteCouponList" parameterType="CouponDto">
+		DELETE FROM COUPON_LIST
+		WHERE CLIST_SEQ=#{clist_seq}
+	</delete>
+	
+	<!-- 쿠폰 가격보다 상품 가격이 큰 제품만 출력
+	 SELECT c.COUPONNAME,c.DISCOUNT,c.MAXPRICE , c.STATUS, cl.EXPIRE
+	FROM COUPON_LIST cl JOIN COUPON c USING(COUPON_SEQ) 
+	WHERE ID = 'ADMIN' AND (SELECT PRICE FROM CLASS class WHERE class.CL_SEQ = 6) > c.DISCOUNT ;
+	 -->
+</mapper>

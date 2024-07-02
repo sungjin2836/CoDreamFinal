@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="attach">
+
+	<insert id="insertAttachfile" parameterType="java.util.List" >
+		<selectKey keyProperty="file_gid" resultType="java.lang.Integer" order="BEFORE">
+			SELECT NVL(MAX(FILE_GID),0) + 1 FROM ATTACHFILE
+		</selectKey>
+		INSERT INTO ATTACHFILE
+			(FILENAME, FILE_GID, ORIGNAME, EXTENSION, FILEPATH, REGDATE)
+			<foreach collection="list" item="item" separator=" UNION ALL ">
+				SELECT #{item.filename}, #{file_gid}, #{item.origname}, #{item.extension}, #{item.filepath}, SYSDATE FROM DUAL
+	        </foreach>
+	</insert>
+	
+	<select id="searchgid" parameterType="java.lang.String" resultType="FileDto">
+		SELECT FILENAME, FILE_GID, ORIGNAME, EXTENSION, FILEPATH, REGDATE FROM ATTACHFILE WHERE FILE_GID = #{file_gid}
+	</select>
+	
+	<select id="searchfile" parameterType="java.lang.String" resultType="FileDto">
+		SELECT FILENAME, FILE_GID, ORIGNAME, EXTENSION, FILEPATH, REGDATE FROM ATTACHFILE WHERE FILENAME = #{filename}
+	</select>
+</mapper>

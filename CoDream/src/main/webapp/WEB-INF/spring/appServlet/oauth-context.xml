@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<!-- oauth2 login -->
+
+	<bean id="kakaoClientId" class="java.lang.String">
+		<constructor-arg value="${kakaoClientId}"/>
+	</bean>
+	<bean id="kakaoClientSecret" class="java.lang.String">
+		<constructor-arg value="${kakaoClientSecret}"/>
+	</bean>
+	<bean id="kakaoRedirectUrl" class="java.lang.String">
+		<constructor-arg value="${kakaoRedirectUrl}"/>
+	</bean>
+	
+	<bean id="kakaoSns" class="com.code.dream.oauth.SnsValue">
+		<constructor-arg value="kakao"/>
+		<constructor-arg ref="kakaoClientId"/>
+		<constructor-arg ref="kakaoClientSecret"/>
+		<constructor-arg ref="kakaoRedirectUrl"/>
+	</bean>
+	
+	<bean id="naverClientId" class="java.lang.String">
+		<constructor-arg value="${naverClientId}"/>
+	</bean>
+	<bean id="naverClientSecret" class="java.lang.String">
+		<constructor-arg value="${naverClientSecret}"/>
+	</bean>
+	<bean id="naverRedirectUrl" class="java.lang.String">
+		<constructor-arg value="${naverRedirectUrl}"/>
+	</bean>
+	
+	<bean id="naverSns" class="com.code.dream.oauth.SnsValue">
+		<constructor-arg value="naver"/>
+		<constructor-arg ref="naverClientId"/>
+		<constructor-arg ref="naverClientSecret"/>
+		<constructor-arg ref="naverRedirectUrl"/>
+	</bean>
+	<bean id="googleClientId" class="java.lang.String">
+		<constructor-arg value="${googleClientId}"/>
+	</bean>
+	<bean id="googleClientSecret" class="java.lang.String">
+		<constructor-arg value="${googleClientSecret}"/>
+	</bean>
+	<bean id="googleRedirectUrl" class="java.lang.String">
+		<constructor-arg value="${googleRedirectUrl}"/>
+	</bean>
+	
+	<bean id="googleSns" class="com.code.dream.oauth.SnsValue">
+		<constructor-arg value="google"/>
+		<constructor-arg ref="googleClientId"/>
+		<constructor-arg ref="googleClientSecret"/>
+		<constructor-arg ref="googleRedirectUrl"/>
+	</bean>
+	
+	<bean id="googleConnectionFactory" class="org.springframework.social.google.connect.GoogleConnectionFactory">
+		<constructor-arg ref="googleClientId"/>
+		<constructor-arg ref="googleClientSecret"/>
+	</bean>
+	
+	<bean id="googleOAuth2Parameters" class="org.springframework.social.oauth2.OAuth2Parameters">
+		<property name="scope">
+			<value>https://www.googleapis.com/auth/userinfo.email</value>
+		</property>
+		<property name="redirectUri" ref="googleRedirectUrl"/>
+	</bean>
+
+</beans>

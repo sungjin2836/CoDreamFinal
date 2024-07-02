@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="oauth">
+
+	<select id="selectAllOAuth" parameterType="java.lang.String" resultType="java.util.Map">
+		SELECT ID, NAVER, GOOGLE, KAKAO FROM OAUTH WHERE ID = #{id}
+	</select>
+	
+	<select id="selectOneOAuth" parameterType="java.util.Map" resultType="java.lang.String">
+		SELECT ID FROM OAUTH WHERE ${service} = #{value}
+	</select>
+	
+	<select id="selectOAuthById" parameterType="java.util.Map" resultType="java.lang.String">
+		SELECT ${service} FROM OAUTH WHERE ID = #{id}
+	</select>
+	
+	<select id="emailOAuth" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT ID FROM REGISTER WHERE EMAIL = #{email}
+	</select>
+	
+	<insert id="registOAuth" parameterType="java.util.Map">
+		INSERT INTO OAUTH(ID, ${service}) VALUES(#{id}, #{oauth})
+	</insert>
+	
+	<update id="updateOAuth" parameterType="java.util.Map">
+		UPDATE OAUTH SET ${service} = #{oauth} WHERE ID = #{id}
+	</update>
+	
+	<select id="loginOAuth" parameterType="java.util.Map" resultType="RegisterDto">
+		SELECT r.ID, NAME, PASSWORD, PHONE, EMAIL, ADDRESS, RESUME, REGDATE, ADRECIEVE, DELFLAG
+			FROM REGISTER r JOIN OAUTH o ON r.ID = o.ID
+			WHERE r.ID = #{id} AND ${service} = #{oauth}
+	</select>
+	
+</mapper>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd" >
+<configuration>
+
+<typeAliases>
+	<typeAlias type="com.code.dream.dto.RegisterDto" alias="RegisterDto"/>
+	<typeAlias type="com.code.dream.dto.ClassDto" alias="ClassDto"/>
+	<typeAlias type="com.code.dream.dto.StudentDto" alias="StudentDto"/>
+	<typeAlias type="com.code.dream.dto.CouponDto" alias="CouponDto"/>
+	<typeAlias type="com.code.dream.dto.AttachFileDto" alias="FileDto"/>
+	<typeAlias type="com.code.dream.dto.RegteacherDto" alias="RegteacherDto"/>
+	<typeAlias type="com.code.dream.dto.QaDto" alias="QaDto"/>
+	<typeAlias type="com.code.dream.dto.ReceiptDto" alias="ReceiptDto"/>
+	<typeAlias type="com.code.dream.dto.StudentDto" alias="StudentDto"/>
+	<typeAlias type="com.code.dream.dto.MemoDto" alias="MemoDto"/>
+	<typeAlias type="com.code.dream.dto.DocumentDto" alias="DocumentDto"/>
+	<typeAlias type="com.code.dream.dto.PageDto" alias="PageDto"/>
+</typeAliases>
+
+<mappers>
+	<mapper resource="sqls/register_Statement.xml"/>
+	<mapper resource="sqls/class_Statement.xml"/>
+	<mapper resource="sqls/oauth_Statement.xml"/>
+	<mapper resource="sqls/coupon_Statement.xml"/>
+	<mapper resource="sqls/attach_Statement.xml"/>
+	<mapper resource="sqls/regteacher_Statement.xml"/>
+	<mapper resource="sqls/qa_Statement.xml"/>
+	<mapper resource="sqls/receipt_Statement.xml"/>
+	<mapper resource="sqls/student_Statement.xml"/>
+</mappers>
+
+</configuration>
+

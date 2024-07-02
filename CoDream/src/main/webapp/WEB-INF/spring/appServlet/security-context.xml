@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+	<bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+	<context:component-scan base-package="com.code.dream" />
+	<security:http auto-config="true" use-expressions="true">
+
+		<!-- 정적 리소스는 모두 접근 허용 -->
+		<security:intercept-url pattern="/resources/**" access="permitAll" />
+		<security:intercept-url pattern="/css/**" access="permitAll" />
+		<security:intercept-url pattern="/images/**" access="permitAll" />
+
+
+		<!-- 로그인된 상태에서는 로그인이나 회원가입 화면에 접근 못하도록 함 -->
+		<security:intercept-url pattern="/member/**" access="isAnonymous()" />
+		
+		<!-- 로그인 된 상태에서만 볼 수 있는 것 -->
+		<security:intercept-url pattern="/coupon/**" access="isAuthenticated()" />
+		<security:intercept-url pattern="/class/**" access="isAuthenticated()" />
+		<security:intercept-url pattern="/mypage/**" access="isAuthenticated()" />
+
+		<!-- 관리자페이지는 관리자만 접근 허용 -->
+		<security:intercept-url pattern="/admin/**" access="hasRole('ROLE_ADMIN')" />
+		<security:intercept-url pattern="/userManage/**" access="hasRole('ROLE_ADMIN')" />
+		<security:intercept-url pattern="/boardManage/**" access="hasRole('ROLE_ADMIN')" />
+		<security:intercept-url pattern="/board/classInput" access="hasRole('ROLE_TEACHER')" />
+		<security:intercept-url pattern="/coupon/insertCoupon" access="hasRole('ROLE_ADMIN')" />
+		
+		<!-- 강사만 접근 가능 -->
+
+
+		<!-- 로그인 설정 -->
+		<security:form-login	
+			username-parameter="id" 
+			password-parameter="password"
+			login-processing-url="/login" 
+			login-page="/member/login"
+			authentication-success-handler-ref="userLoginSuccessHandler"
+			authentication-failure-handler-ref="userLoginFailHandler" />
+			
+
+		<!-- 로그아웃 설정 -->
+		<security:logout 
+			logout-url="/logout"
+			invalidate-session="true"
+			delete-cookies="true" />
+			
+		<!-- 권한이 없는 경로를 접속시도했을때 처리 -->
+		<security:access-denied-handler ref="accessDeniedHandler" />
+		
+		<security:remember-me services-ref="persistentTokenBasedRememberMeServices"
+			key="codevang"
+			authentication-success-handler-ref="userLoginSuccessHandler" />
+	</security:http>
+	
+	<bean id="jdbcTokenRepositoryImpl"
+		class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<bean id="persistentTokenBasedRememberMeServices"
+		class="org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices">
+		<constructor-arg name="key" value="codevang" />
+		<constructor-arg name="userDetailsService" ref="userSecurityServiceImpl" />
+		<constructor-arg name="tokenRepository" ref="jdbcTokenRepositoryImpl" />
+		<property name="cookieName" value="CODREAM" />
+		<property name="parameter" value="remember-me" />
+		<property name="tokenValiditySeconds" value="60000" />
+	</bean>
+
+	<!-- 권한이 없어서 금지된 URI 접속할 때 보여줄 페이지(403 에러 페이지 대체) -->
+	<bean id="accessDeniedHandler" class="org.springframework.security.web.access.AccessDeniedHandlerImpl">
+	    <property name="errorPage" value="/" />
+	</bean>
+	
+	<!-- DB 연동 설정 -->
+	<security:authentication-manager>
+		<security:authentication-provider ref="userLoginAuthenticationProvider"/>
+	</security:authentication-manager>
+	
+</beans>

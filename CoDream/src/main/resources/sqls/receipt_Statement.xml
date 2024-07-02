@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="receipt">
+
+	<select id="selectPay" parameterType="receiptDto">
+		SELECT PAY_SEQ , TID , PAYDATE 
+		FROM PAYMENT p 
+	</select>
+	
+	<insert id="insertpayment" parameterType="receiptDto">
+	
+	<selectKey keyProperty="re_seq" order="BEFORE" resultType="java.lang.String">
+			SELECT NVL(MAX(PAY_SEQ),0) + 1 FROM PAYMENT
+		</selectKey>
+	
+		INSERT INTO PAYMENT
+			(PAY_SEQ, TID, PAYDATE)
+			VALUES(#{re_seq}, #{tid}, SYSDATE)
+	</insert>
+	
+	<insert id="insertReceipt" parameterType="receiptDto">
+		INSERT INTO RECEIPT
+		(RE_SEQ, BUYER, PRODUCT_SEQ, PRICE, STATUS, PAY_SEQ)
+		VALUES(#{re_seq}, #{buyer},  #{product_seq}, #{price}, 'B', #{pay_seq})
+</insert>
+	<select id="selectReceipt" parameterType="receiptDto" resultType="receiptDto">
+		SELECT r.RE_SEQ, r.BUYER , r.PRICE ,r.PRODUCT_SEQ, r.PAY_SEQ , p.TID ,r.STATUS , p.PAYDATE , c.CL_TITLE 
+	FROM RECEIPT r LEFT OUTER JOIN PAYMENT p ON(r.PAY_SEQ=p.PAY_SEQ) LEFT JOIN CLASS c ON (c.CL_SEQ = r.PRODUCT_SEQ)
+	WHERE BUYER = #{id} AND r.STATUS = 'B'
+	</select>
+	<update id="updateReceipt" parameterType="receiptDto">
+		UPDATE RECEIPT
+		SET STATUS='R'
+		WHERE RE_SEQ=#{re_seq}
+	</update>
+	
+	
+
+</mapper>
